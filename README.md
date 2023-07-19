@@ -1,13 +1,25 @@
 # PROFESIONALIZANDO LA BASE DE DATOS (2a PREENTREGA DEL PROYECTO FINAL)
 
-A través de esta práctica integradora, se realiza la integración de express, router, handlebars, mongoDB Atlas y mongoose.
+A través de esta entrega, se realiza la integración de express, router, handlebars, mongoDB Atlas y mongoose.
 Se crea un carpeta llamada **dao** donde se colocaran los manager de products y carts con persistencia en archivo mediante File System; así mismo dentro de esta carpeta se coloca el archivo de conexión a la base de datos MongoDB Atlas llamado **db.js** y una carpeta llamada **models** donde se colocaran los archivos de esquemas de mongoose, para los manejadores de products, carts y messages.
+
+Mediante handlebars se crea una vista de visualización de un chat que emplea para su comunicación socket.io.
+
+Por otro lado, se agregan dos vistas para visualización de productos ubicada en **/products**, y una vista de visualización de carts en **/carts/:cid**, usando el motor de platillas Handlebars.
+
 
 ## HANDLEBARS (MOTOR DE PLANTILLAS)
 
-Mediante el uso de handlebars como motor de plantillas, para crear una página estática para un chat, donde la comunicación se realiza a través de websockets, donde se crea un formulario para recibir los datos del nombre de usuario que es el correo electrónico del usuario mediente un form input, y el texto del mensaje a través de un texarea. Se realiza un submit de estos datos usando un botón que dispara el evento submit; el formulación a su vez ejecuta el evento onsubmit que ejecuta la función correspondiente para dar formato al mensaje, mediante el objeto messaging como **{user: recibe el valor del input box username, message: recobe el valor del textarea usermessage}**.
+Mediante el uso de handlebars como motor de plantillas, para crear una página estática para un chat, donde la comunicación se realiza a través de websockets, donde se crea un formulario para recibir los datos del nombre de usuario que es el correo electrónico del usuario mediente un form input, y el texto del mensaje a través de un texarea. Se realiza un submit de estos datos usando un botón que dispara el evento submit; el formulación a su vez ejecuta el evento onsubmit que ejecuta la función correspondiente para dar formato al mensaje, mediante el objeto messaging como **{user: recibe el valor del input box username, message: recibe el valor del textarea usermessage}**.
 
 Para essto se crea una carpeta de vistas llamada **views**, en la ruta raíz, donde se alberga el archivo **main.handlebars.js** en la carpeta de **layout**; por otro lado en la crapeta de views, se crea el archivo **chat.handlebars.js**, donde realiza el diseño del formulario.
+
+Para la vista de products, se creaun router de productos a través del cual se direccionará hacia la ruta de la vista de productos, ubicado en **/products**; y mediante el uso de un archivo **products.handlebars**, se colocan las etiquetas html para colocar los botones de visualizar el carrito, pagina siguiente y pagina anterior, y el render de las trajetas de productos. La lógica se realizará desde el archivo **products.js**, donde se albergará las líneas de código para realizar los fetch correspondientes hacia la base de datos, colección products y poder descargar los documentos correspondientes a los productos existentes mediante el método get, para poder visualizarlos en la vista de productos. Ademas dentro de esta vista será posible agregar los productos de uno en uno al carrito de compra y almacenarse en la base de datos de la colección carts, através de uso del metodo put, y crear un nuevo carrito mediante el metodo post; estos métodos realizan un fetch hacia los endpoints correspondientes.
+
+El el archivo productos.js, se cuenta con una variable global cartId que es el id de carrito de compras, de momento este valor está inicializado con el id de un carrito que esta en la base da datos MongoDB Atlas, de la collección carts con id **'64b522c4d5b51e2d98a0fa81'**, por lo que si se quiere interactuar con la creación de un nuevo carrito cada vez que se recargue la pagina, se tendra que inicializar con el valor de **undefined**.
+
+
+Para la vista de carts, de la misma forma se cre aun router para direccionar hacia la vista de cart, ubicado en **/carts/:cid**, donde cid representa el cart actual de compra, es valor se carga de forma automática cuando da clic en el boton de viaualizar carrito en la vista de productos, el cual abrira una pestaña nueva con la vista del carrito mostrando los datos generales del producto, los cuales se descargan de la base de datos, de la colección carts, mediante el fetch hacia el endpoitn correspondiente.
 
 ## WEBSOCKETS
 
@@ -74,6 +86,17 @@ Donde qty es la cantidad de items del mismo producto. el ID del producto es el q
 
 Si el pid no exite, se agregará al cart el producto junto con su cantidad en la forma  objeto {_id: pid. qty: qty}; si el producto ya existe solo se modificará la cantidad.
 
+- Se crea un endpoint para agregar o actualizar un producto desde la ruta **/:cid/products**, donde enviar un objeto de la siguiente forma
+
+```JSON
+
+{
+    "productId": "id del producto de la base datos products",
+    "qty": Number
+}
+
+```
+
 - POST para borrar un producto del cart, en la ruta **/:cid/delproduct/:pid**. Mediante este endpint se elimará un producto del documento de cart de la colección carts de Atlas.
 - DELETE para borrar un cart de la colección carts, en la ruta **/delcart/:cid**, el endpoint eliminará el documento cart de la colección carts.
 
@@ -88,15 +111,17 @@ Se crearan los esquemas para el modelado de los datos de carts, products y messa
 ```javascript
 
 {
-    _id: {
-        type: String
-    },
+    productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }
     qty: {
         type: Number
     }
 }
 
 ```
+Esto con la finalidad de implementar populate mediante elmétodo findOne, en el esquema de cart y hacer referencia a los productos con el esquema Products.
 
 asi mismo este esquema se lleva al esquema de carts de la siguiente forma:
 
@@ -152,6 +177,9 @@ asi mismo este esquema se lleva al esquema de carts de la siguiente forma:
 
 ```
 
+Además dentro del esquema de productos se integra la paginación mediante el uso del plugin mongoose aggregate paginate v2.
+con aggregate se podran hacer los stages para poder establecer un limite, ordenar por precio, y filtrado por categoria o existencia
+
 - Y el esquema de mensajes primero se define el mensaje se colocará dentro del arreglo de mensajes, son el nombre de messageTypeSchema:
 
 ```javascript
@@ -177,6 +205,5 @@ Y en el esquema del arreglo de mensajes se define de la siguiente manera:
 
 ```
 
-
-#FIN
+# FIN
 
