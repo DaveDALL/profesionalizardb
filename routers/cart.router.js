@@ -35,10 +35,11 @@ router.put('/:cid', async (req, res) => {
     let {cid} = req.params
     let {productId, qty} = req.body
     try {
-        let foundCart = await Cart.findOne({_id: cid})
-        let foundProduct = foundCart.products.find(product => product.productId === productId)
+        let foundCart = await Cart.find({_id: cid})
+        let products = foundCart[0].products
+        let foundProduct = products.find(product => product.productId.equals(productId))
         if(foundProduct) {
-            let updatedCartResult = await Cart.updateOne({_id: cid, 'products.productId': productId}, {$set: {'products.$.qty': qty}})
+            let updatedCartResult = await Cart.updateOne({_id: cid, 'products.productId': productId}, {$set: {'products.$.qty': qty + foundProduct.qty}})
             res.status(200).send({status: 'success', payload: updatedCartResult})
         }else {
             let updatedCartResult = await Cart.updateOne({_id: cid}, {$push: {products: {productId: productId, qty: qty}}})
@@ -55,10 +56,11 @@ router.put('/:cid/products/:pid', async (req, res) => {
     let {cid, pid} = req.params
     let {qty} = req.body
     try {
-        let foundCart = await Cart.findOne({_id: cid})
-        let foundProduct = foundCart.products.find(product => product.productId === pid)
+        let foundCart = await Cart.find({_id: cid})
+        let products = foundCart[0].products
+        let foundProduct = products.find(product => product.productId.equals(pid))
         if(foundProduct) {
-            let updatedCartResult = await Cart.updateOne({_id: cid, 'products.productId': pid}, {$set: {'products.$.qty': qty}})
+            let updatedCartResult = await Cart.updateOne({_id: cid, 'products.productId': pid}, {$set: {'products.$.qty': qty + foundProduct.qty}})
             res.status(200).send({status: 'success', payload: updatedCartResult})
         }else {
             let updatedCartResult = await Cart.updateOne({_id: cid}, {$push: {products: {productId: pid, qty: qty}}})
@@ -74,8 +76,9 @@ router.put('/:cid/products/:pid', async (req, res) => {
 router.delete('/:cid/products/:pid', async (req, res) => {
     let {pid, cid} = req.params
     try {
-        let foundCart = await Cart.findOne({_id: cid})
-        let foundProduct = foundCart.products.find(product => product.productId === pid)
+        let foundCart = await Cart.find({_id: cid})
+        let products = foundCart[0].products
+        let foundProduct = products.find(product => product.productId.equals(pid))
         if(foundProduct) {
             let updatedCartResult = await Cart.updateOne({_id: cid}, {$pull: {products: {productId: pid}}})
             res.status(200).send({status: 'success', payload: updatedCartResult})
